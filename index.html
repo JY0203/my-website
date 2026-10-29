@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>你的名字 | 個人網站</title>
+  <meta name="description" content="你的名字的個人網站:關於我、作品與聯絡方式。">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="logo" href="#home">你的名字</a>
+    <nav>
+      <a href="#about">關於我</a>
+      <a href="#projects">作品</a>
+      <a href="#contact">聯絡</a>
+      <button id="theme-toggle" type="button" aria-label="切換深色/淺色模式">🌓</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="home" class="hero">
+      <h1>嗨,我是<span class="accent">你的名字</span></h1>
+      <p>一句話介紹你自己,例如:軟體工程師,喜歡打造簡單好用的東西。</p>
+      <a class="button" href="#projects">看看我的作品</a>
+    </section>
+
+    <section id="about">
+      <h2>關於我</h2>
+      <p>在這裡寫一段自我介紹:背景、興趣、正在學習的事物。</p>
+    </section>
+
+    <section id="projects">
+      <h2>作品</h2>
+      <div class="cards">
+        <article class="card">
+          <h3>專案一</h3>
+          <p>簡短說明這個專案做了什麼。</p>
+          <a href="#">查看專案 →</a>
+        </article>
+        <article class="card">
+          <h3>專案二</h3>
+          <p>簡短說明這個專案做了什麼。</p>
+          <a href="#">查看專案 →</a>
+        </article>
+        <article class="card">
+          <h3>專案三</h3>
+          <p>簡短說明這個專案做了什麼。</p>
+          <a href="#">查看專案 →</a>
+        </article>
+      </div>
+    </section>
+
+    <section id="contact">
+      <h2>聯絡我</h2>
+      <p>
+        Email:<a href="mailto:danny2soug@gmail.com">danny2soug@gmail.com</a><br>
+        GitHub:<a href="https://github.com/JY0203">github.com/JY0203</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>© <span id="year"></span> 你的名字。</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
