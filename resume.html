@@ -55,7 +55,9 @@
     }
     .lang-switch button.active { background: var(--btn-on); color: var(--btn-on-text); border-color: var(--btn-on); }
     .download {
-      padding: 8px 16px; border: 2px solid var(--btn-border); border-radius: 10px;
+      display: inline-flex; align-items: center; height: 34px; padding: 0 16px;
+      border: 1px solid var(--btn-border); border-radius: 999px;
+      transition: color .2s, background .2s, border-color .2s;
     }
     .download:hover { background: var(--btn-on); color: var(--btn-on-text); border-color: var(--btn-on); }
 
@@ -108,7 +110,7 @@
 
     /* 嵌在首頁彈出層裡：背景透明（由彈出層提供），只留下載按鈕 */
     .embed body { background: transparent; }
-    .embed .topbar { position: static; background: transparent; border-bottom: 0; justify-content: flex-end; padding: 16px 68px 0 24px; }
+    .embed .topbar { position: static; background: transparent; border-bottom: 0; justify-content: flex-end; padding: 12px 24px 0; }
     .embed .topbar > a[href="index.html"], .embed .lang-switch { display: none; }
     .embed .page { margin-top: 0; padding-top: 8mm; }
 
@@ -304,6 +306,23 @@
     });
     if (root.classList.contains('embed')) {
       document.querySelectorAll('a[href^="http"]').forEach(a => { a.target = '_blank'; a.rel = 'noopener noreferrer'; });
+      // 嵌在彈出層時，滾輪由履歷自己處理（preventDefault + scrollBy），不靠瀏覽器的預設捲動：
+      // 使用者連續滾動時，瀏覽器會把整段手勢鎖在最初的目標（首頁），iframe 的預設捲動就收不到。
+      // 已經在頂端還往上滾：把滾輪量回報給首頁，由首頁帶著彈出層收起；剛從下面捲回頂端的慣性不算
+      let scrolledAt = 0;
+      window.addEventListener('wheel', (e) => {
+        if (e.ctrlKey) return;   // 縮放手勢交給瀏覽器
+        e.preventDefault();
+        const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * innerHeight : e.deltaY;
+        const now = performance.now();
+        if (dy < 0 && (document.scrollingElement || root).scrollTop <= 0) {
+          if (now - scrolledAt > 250)
+            window.parent.postMessage({ type: 'resume-wheel-up', dy }, location.origin === 'null' ? '*' : location.origin);
+          return;
+        }
+        window.scrollBy({ top: dy, left: 0, behavior: 'instant' });
+        scrolledAt = now;
+      }, { passive: false });
     }
   </script>
 </body>

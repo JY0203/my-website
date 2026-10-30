@@ -14,6 +14,12 @@
       d.dataset.theme = t === 'light' ? 'light' : 'dark';
       d.dataset.lang = l === 'en' ? 'en' : 'zh';
       d.lang = l === 'en' ? 'en' : 'zh-Hant';
+      /* 開場動畫：每次載入（含重新整理、回訪、帶 #home / #about 的網址）都播；只有 #resume 的分享連結與偏好減少動態不播 */
+      if (location.hash !== '#resume' && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        d.classList.add('intro');
+        history.scrollRestoration = 'manual';   // 重新整理時不要還原上次的捲動位置，動畫一律從最上面開始
+        if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+      }
     })();
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,6 +45,7 @@
       --panel-line: rgba(230, 223, 200, 0.18);
       --hi: rgba(255, 255, 255, 0.14);
       --titlebar: rgba(0, 0, 0, 0.25);
+      --mac-red: #ff5f57; --mac-yellow: #febc2e; --mac-green: #28c840;   /* 紅綠燈：macOS 固定色，不隨主題變 */
       --shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 60px rgba(230, 223, 200, 0.05), 0 24px 80px rgba(0, 0, 0, 0.7);
       --bar-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
       --selection: #2a2825;
@@ -130,22 +137,42 @@
     }
     .window {
       width: min(860px, 100%);
-      background: var(--panel); border: 1px solid var(--panel-line); border-radius: 14px;
+      background: var(--panel); border: 1px solid var(--panel-line); border-radius: 18px;
       -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%);
       box-shadow: inset 0 1px 0 var(--hi), var(--shadow);
       overflow: hidden;
     }
     .titlebar {
-      display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+      display: flex; align-items: center; gap: 8px; padding: 13px 18px;
       border-bottom: 1px solid var(--panel-line); background: var(--titlebar); color: var(--dim); font-size: 12px;
     }
-    .dot { width: 11px; height: 11px; border-radius: 50%; background: var(--dim); opacity: .6; }
-    .dot.r { background: var(--red); } .dot.y { background: var(--yellow); } .dot.g { background: var(--green); }
-    .titlebar .path { margin-left: 8px; }
+    .dot { width: 13px; height: 13px; border-radius: 50%; background: var(--dim); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14); }
+    .dot.r { background: var(--mac-red); } .dot.y { background: var(--mac-yellow); } .dot.g { background: var(--mac-green); }
+    .titlebar .path { margin-left: 10px; }
     .content { padding: 28px clamp(18px, 4vw, 36px) 32px; }
 
-    .prompt { color: var(--green); }
-    .prompt::before { content: "❯ "; color: var(--orange); }
+    .prompt { display: flex; align-items: center; color: var(--green); }
+    .prompt::before { content: "❯"; margin-right: 1ch; color: var(--orange); }
+    /* p10k 風格的右側 prompt：✔ 加一個箭頭形的時間膠囊（時間是頁面載入當下，不會走動，跟真的終端機一樣） */
+    .rprompt { display: none; margin-left: auto; align-items: center; gap: 12px; font-size: 13px; }
+    .rprompt.on { display: flex; }
+    .rprompt .ok { color: var(--green); }
+    /* 開場動畫：依序顯示的區塊先藏起來（display:none 讓視窗像真的終端機一樣隨輸出長高），輸入過程的游標，clear 後被清掉的內容 */
+    html.intro { overflow: hidden; }
+    html.intro .step:not(.shown) { display: none; }
+    .cmd.typing::after {
+      content: ""; display: inline-block; width: .55em; height: 1.15em; margin-left: 1px; vertical-align: text-bottom;
+      background: var(--fg); animation: blink 1.1s steps(1) infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    /* 開場動畫借用 home 視窗播放 clear 之後的內容，結束時再還給 about 視窗 */
+    .content > .cleared { display: none; }   /* 開場動畫的 clear：畫面上原本的內容 */
+    .rprompt time {
+      display: inline-flex; align-items: center; gap: 8px; height: 22px; padding: 0 10px 0 18px;
+      background: var(--fg); color: var(--bg); font-weight: 500;
+      clip-path: polygon(11px 0, 100% 0, 100% 100%, 11px 100%, 0 50%);
+    }
+    .rprompt time svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
     .cmd { color: var(--fg); }
     .out { margin: 6px 0 22px; }
     .dim { color: var(--dim); }
@@ -206,26 +233,38 @@
       position: absolute; left: 50%; bottom: 28px;
       top: calc(var(--nav-gap) * 2 + var(--nav-h));
       width: min(860px, calc(100% - 40px));
-      background: var(--sheet); border: 1px solid var(--panel-line); border-radius: 14px;
+      background: var(--sheet); border: 1px solid var(--panel-line); border-radius: 18px;
       box-shadow: inset 0 1px 0 var(--hi), var(--shadow);
       -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%);
       overflow: hidden;
       opacity: 0; transform: translate(-50%, calc(-100% - var(--nav-gap) * 2 - var(--nav-h) - 24px));
-      transition: transform .4s cubic-bezier(.5, 0, .75, 0), opacity .3s ease;   /* 收起：加速上去 */
+      transition: transform .4s cubic-bezier(.5, 0, .75, 0), opacity 0s linear .4s;   /* 收起：加速上去，移出畫面後才隱藏（不能邊移邊淡出，否則看起來像消失） */
     }
     .resume-overlay.open .resume-sheet {
       opacity: 1; transform: translate(-50%, 0);
       transition: transform .65s cubic-bezier(.22, 1.15, .36, 1), opacity .3s ease;   /* 落下：微微彈一下 */
     }
-    .resume-sheet iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
-    .resume-close {
-      position: absolute; top: 12px; right: 12px; z-index: 2; width: 34px; height: 34px; padding: 0;
-      display: grid; place-items: center; border-radius: 50%; cursor: pointer;
-      border: 1px solid var(--panel-line); background: rgba(var(--tint), 0.08); color: var(--fg);
-      transition: background .2s;
+    .resume-sheet:focus { outline: none; }
+    /* 滾輪拖曳中：位置由 --p 決定，不走 transition，也不讓 iframe 吃掉滾輪 */
+    .resume-overlay.dragging { visibility: visible; transition: none; }
+    .resume-overlay.dragging .resume-scrim { opacity: var(--p); transition: none; }
+    .resume-overlay.dragging .resume-sheet {
+      opacity: 1; transition: none;
+      transform: translate(-50%, calc((1 - var(--p)) * (-100% - var(--nav-gap) * 2 - var(--nav-h) - 24px)));
     }
-    .resume-close:hover, .resume-close:focus-visible { background: rgba(var(--tint), 0.18); outline: none; }
-    .resume-close svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+    .resume-overlay.dragging iframe { pointer-events: none; }
+    .resume-sheet iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
+    /* 關閉鈕：macOS 視窗左上角的紅色圓點，hover 才顯示 ×（外圈加大是為了好點） */
+    .resume-close {
+      position: absolute; top: 7px; left: 12px; z-index: 2; width: 24px; height: 24px; padding: 0;
+      display: grid; place-items: center; border: 0; border-radius: 50%; background: none; cursor: pointer;
+      color: rgba(0, 0, 0, 0.55);
+    }
+    .resume-close::before { content: ""; position: absolute; width: 13px; height: 13px; border-radius: 50%; background: var(--mac-red); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12); }
+    .resume-close svg { position: relative; width: 8px; height: 8px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; opacity: 0; transition: opacity .15s; }
+    .resume-close:hover svg, .resume-close:focus-visible svg { opacity: 1; }
+    .resume-close:focus-visible { outline: 2px solid rgba(var(--tint), 0.4); outline-offset: 1px; }
+    @media (hover: none) { .resume-close svg { opacity: 1; } }
 
     /* 複製成功的提示 */
     .toast {
@@ -246,6 +285,7 @@
     .js .reveal.in { opacity: 1; transform: none; }
 
     @media (max-width: 640px) {
+      .rprompt .ok { display: none; }
       .fetch { flex-direction: column; align-items: flex-start; }
       .about-grid { flex-direction: column; }
       .portrait { font-size: clamp(5px, calc((100vw - 90px) / 28), 9.5px); }
@@ -299,7 +339,7 @@
 
   <div class="resume-overlay" id="resume-overlay" inert>
     <div class="resume-scrim" id="resume-scrim"></div>
-    <section class="resume-sheet" role="dialog" aria-modal="true" aria-label="Resume / 履歷">
+    <section class="resume-sheet" id="resume-sheet" role="dialog" aria-modal="true" aria-label="Resume / 履歷" tabindex="-1">
       <button type="button" class="resume-close" id="resume-close" aria-label="Close / 關閉">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
       </button>
@@ -312,9 +352,9 @@
       <div class="window reveal">
         <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="path">~ — zsh</span></div>
         <div class="content">
-          <div class="prompt"><span class="cmd">fastfetch</span></div>
+          <div class="prompt"><span class="cmd">fastfetch</span><span class="rprompt" aria-hidden="true"><span class="ok">✔</span><time><span class="clock"></span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></time></span></div>
           <h1 class="sr-only">Jon J. — DevOps / SRE / Platform</h1>
-          <div class="fetch">
+          <div class="fetch step">
             <pre class="logo" aria-hidden="true">  ███████████
   ███████████
        ███
@@ -346,18 +386,18 @@
               </div>
             </div>
           </div>
-          <div class="prompt"><span class="cmd">cat greet.txt</span></div>
-          <div class="out" style="margin-bottom:0"><span class="t-zh">嗨，我是 Jon，很高興見到你。</span><span class="t-en">Hi there, this is Jon. Nice to see you.</span></div>
         </div>
       </div>
     </section>
 
     <section class="screen" id="about">
       <div class="window reveal">
-        <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="path">~/about</span></div>
+        <div class="titlebar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="path">~ — zsh</span></div>
         <div class="content">
-          <div class="prompt"><span class="cmd">cat about.md</span></div>
-          <div class="about-grid">
+          <div class="prompt"><span class="cmd">cat greet.txt</span><span class="rprompt" aria-hidden="true"><span class="ok">✔</span><time><span class="clock"></span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></time></span></div>
+          <div class="out step"><span class="t-zh">嗨，我是 Jon，很高興見到你。</span><span class="t-en">Hi there, this is Jon. Nice to see you.</span></div>
+          <div class="prompt step"><span class="cmd">cat about.md</span><span class="rprompt" aria-hidden="true"><span class="ok">✔</span><time><span class="clock"></span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></time></span></div>
+          <div class="about-grid step">
             <pre class="portrait" id="portrait" role="img" aria-label="Jon 的大頭照（ASCII 藝術）">@@@@@@@@@@@@@@@%%%#####%%%#%%@@@@@@@@@@@@@@@
 @@@@@@@@@@@%%#+-:... ..:..::+*#%%@@@@@@@@@@@
 @@@@@@@@%*=-:....       .   ...--+%%@@@@@@@@
@@ -494,9 +534,18 @@
     document.getElementById('lang-toggle').addEventListener('click', () =>
       setLang(root.dataset.lang === 'zh' ? 'en' : 'zh', true));
 
+    /* p10k 右側 prompt 的時間：訪客本機時間，只在 prompt 出現（與按下 Enter）的當下讀一次，不會走動 */
+    const clockNow = () => new Date().toLocaleTimeString('en-GB', { hourCycle: 'h23', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    if (!root.classList.contains('intro')) {   // 有開場動畫時由動畫逐一顯示
+      const t = clockNow();
+      document.querySelectorAll('.rprompt').forEach(el => {
+        el.querySelector('.clock').textContent = t;
+        el.classList.add('on');
+      });
+    }
+
     const reveals = document.querySelectorAll('.reveal');
     const tabs = document.querySelectorAll('.tabs a');
-    const screens = document.querySelectorAll('section.screen');
 
     /* 履歷彈出層：點 Resume 標籤時，停在目前頁面，模糊背景並讓履歷落下 */
     const overlay = document.getElementById('resume-overlay');
@@ -509,16 +558,19 @@
     function markActive() {
       tabs.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + currentSection));
     }
+    function ensureFrame() {
+      if (!frame.getAttribute('src')) frame.src = frame.dataset.src;
+    }
     function openResume() {
       if (resumeOpen) return;
-      if (!frame.getAttribute('src')) frame.src = frame.dataset.src;
+      ensureFrame();
       resumeOpen = true;
       lastFocus = document.activeElement;
       overlay.inert = false;
       overlay.classList.add('open');
       root.classList.add('no-scroll');
       tabs.forEach(a => a.classList.toggle('active', a === resumeTab));
-      document.getElementById('resume-close').focus({ preventScroll: true });
+      document.getElementById('resume-sheet').focus({ preventScroll: true });
     }
     function closeResume() {
       if (!resumeOpen) return;
@@ -534,7 +586,70 @@
     document.getElementById('resume-scrim').addEventListener('click', closeResume);
     document.getElementById('resume-close').addEventListener('click', closeResume);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeResume(); });
+    /* 滾輪連動：履歷的位置直接跟著滾輪走（--p：0 = 收在畫面上方，1 = 完全落下）。
+       頁面到底再往下滾 → 一路拉下來；履歷在頂端再往上滾 → 一路收回去。
+       滾輪停下來後，依目前位置決定落下或彈回；點標籤的動畫不受影響。 */
+    const WHEEL_RANGE = 360;      // deltaY 累積多少 = 履歷完整落下；越小越靈敏
+    const SETTLE_MS = 120;        // 滾輪停多久算「放手」
+    const SNAP_OPEN = 0.4, SNAP_CLOSE = 0.6;   // 從收起拉出 > 40% 就落下；從落下推回 > 40%（< 60%）就收起
+    let dragging = false, dragP = 0, dragTimer = 0, dragLockUntil = 0, lastScrollAt = 0;
+    function atPageBottom() {
+      return root.scrollTop + window.innerHeight >= root.scrollHeight - 4;
+    }
+    function setDrag(p) {
+      dragP = Math.min(1, Math.max(0, p));
+      overlay.style.setProperty('--p', dragP);
+    }
+    function dragBy(dy) {
+      if (!dragging) {
+        if (performance.now() < dragLockUntil) return;
+        dragging = true;
+        ensureFrame();
+        setDrag(resumeOpen ? 1 : 0);
+        overlay.classList.add('dragging');
+      }
+      setDrag(dragP + dy / WHEEL_RANGE);
+      clearTimeout(dragTimer);
+      // 拉到盡頭就直接定案，不等放手：否則使用者一路往下滾時永遠停在拖曳模式，履歷收不到滾輪
+      if (dragP >= 1 && !resumeOpen || dragP <= 0 && resumeOpen) endDrag();
+      else dragTimer = setTimeout(endDrag, SETTLE_MS);
+    }
+    function endDrag() {
+      clearTimeout(dragTimer);
+      dragging = false;
+      dragLockUntil = performance.now() + 300;   // 吃掉觸控板的慣性尾巴
+      overlay.classList.remove('dragging');
+      overlay.style.removeProperty('--p');
+      const wantOpen = dragP >= (resumeOpen ? SNAP_CLOSE : SNAP_OPEN);
+      if (wantOpen) openResume(); else closeResume();   // 狀態沒變時是 no-op，CSS transition 會把它帶回原位
+    }
+    window.addEventListener('scroll', () => { lastScrollAt = performance.now(); }, { passive: true });
+    /* 履歷開著時，父頁收到的滾輪（在 iframe 外，或連續滾動時瀏覽器把手勢鎖在父頁）轉給 iframe 捲動。
+       回傳 true = 已當成履歷內容的捲動處理掉；在頂端往上滾則交給呼叫端去收起彈出層 */
+    let forwardedAt = 0;
+    function forwardWheel(dy) {
+      try {
+        const win = frame.contentWindow, now = performance.now();
+        if (dy < 0 && win.document.scrollingElement.scrollTop <= 0) return now - forwardedAt < 250;   // 剛捲回頂端的慣性：吃掉，不收起
+        win.scrollBy({ top: dy, behavior: 'instant' });
+        forwardedAt = now;
+        return true;
+      } catch (err) { return false; }   // 跨來源（例如 file://）碰不到 iframe
+    }
+    window.addEventListener('wheel', (e) => {
+      if (dragging) return dragBy(e.deltaY);
+      if (resumeOpen) {
+        if (!forwardWheel(e.deltaY) && e.deltaY < 0) dragBy(e.deltaY);
+      } else if (!root.classList.contains('intro') && e.deltaY > 0 && atPageBottom() && performance.now() - lastScrollAt > 150) {
+        dragBy(e.deltaY);   // 剛捲到底的慣性不算，等頁面停下來；開場動畫中的滾輪另有用途
+      }
+    }, { passive: true });
+    window.addEventListener('message', (e) => {
+      if (e.source !== frame.contentWindow || !e.data) return;
+      if (e.data.type === 'resume-wheel-up' && resumeOpen) dragBy(e.data.dy || 0);
+    });
     frame.addEventListener('load', postPrefs);
+    markActive();
     if (location.hash === '#resume') openResume();   // 可以直接分享 index.html#resume
 
     if ('IntersectionObserver' in window) {
@@ -551,9 +666,133 @@
           if (!resumeOpen) markActive();
         });
       }, { rootMargin: '-45% 0px -45% 0px' });
-      screens.forEach(s => tabObs.observe(s));
+      document.querySelectorAll('section.screen').forEach(sc => tabObs.observe(sc));
     } else {
       reveals.forEach(el => el.classList.add('in'));
+    }
+    /* 開場動畫：模擬在終端機裡打指令。fastfetch → clear（畫面捲走）→ cat greet.txt → cat about.md。
+       任何輸入（按鍵、點擊、滾輪、觸控）都會跳過，直接呈現完整頁面。 */
+    if (root.classList.contains('intro')) {
+      const aboutScreen = document.getElementById('about');
+      const homeWin = document.querySelector('#home .window'), aboutWin = aboutScreen.querySelector('.window');
+      const homeContent = homeWin.querySelector('.content'), aboutContent = aboutWin.querySelector('.content');
+      const aboutNodes = [...aboutContent.children];   // clear 之後的內容：動畫期間暫借 home 視窗，結束再還回來
+      let moved = false;
+      const [pFetch, pGreet, pAbout] = document.querySelectorAll('.prompt');
+      const pClear = pFetch.cloneNode(true);   // clear 這行只在動畫裡出現，結束後移除
+      pClear.querySelector('.cmd').textContent = 'clear';
+      pClear.classList.add('step');
+      pFetch.parentElement.appendChild(pClear);
+      const prompts = [pFetch, pClear, pGreet, pAbout];
+      const typed = new Map(prompts.map(p => [p, p.querySelector('.cmd').textContent]));   // 先記下原本的指令，再清空等動畫打字
+      prompts.forEach(p => { p.querySelector('.cmd').textContent = ''; });
+      document.querySelectorAll('.window').forEach(w => w.classList.add('in'));   // 不要淡入，視窗直接在
+
+      let done = false;
+      const toTop = () => { if (!moved && !done) root.scrollTo({ top: 0, behavior: 'instant' }); };   // 瀏覽器可能依 hash 或舊位置捲過
+      toTop();
+      window.addEventListener('load', toTop, { once: true });
+      const SKIP = {};
+      const wait = (ms) => new Promise((res, rej) => setTimeout(() => (done ? rej(SKIP) : res()), ms));
+      const show = (el) => el.classList.add('shown');
+      const stamp = (p) => { p.querySelector('.clock').textContent = clockNow(); };
+      function draw(p) {   // prompt 出現：只有游標，還沒有時間戳（跟真的終端機一樣，按下 Enter 才有）
+        p.querySelector('.cmd').classList.add('typing');
+      }
+      function enter(p) {   // 按下 Enter：此刻才產生時間戳，之後不再變
+        p.querySelector('.cmd').classList.remove('typing');
+        stamp(p);
+        p.querySelector('.rprompt').classList.add('on');
+      }
+      async function type(p, text) {
+        const cmd = p.querySelector('.cmd');
+        for (const ch of text) { cmd.textContent += ch; await wait(55 + Math.random() * 75); }
+        await wait(380);
+        enter(p);
+      }
+
+      /* 輸入的意義依階段而定：自動播放中 = 跳過；停在 fastfetch 輸出後 = 滾動量驅動打字（往下滾打出 clear，往回滾會刪掉），Esc 隨時跳過 */
+      const CHAR_PX = 40;   // 每滾動多少 px 打出一個字
+      let drive = null;     // { cmd, text, acc, resolve }
+      let touchY = 0;
+      function waitForScrollTyping(p, text) {
+        return new Promise(resolve => { drive = { cmd: p.querySelector('.cmd'), text, acc: 0, resolve }; });
+      }
+      let lastWheelAt = 0;
+      function onInput(e) {
+        if (e.key === 'Escape') return finish();
+        if (e.type === 'wheel') {
+          // 打完 clear 後觸控板的慣性還會繼續送滾輪事件：同一段連續滾動的尾巴不算新的輸入，安靜 200ms 後再滾才算
+          const fresh = performance.now() - lastWheelAt > 200;
+          lastWheelAt = performance.now();
+          if (!drive && !fresh) return;
+        }
+        if (e.type === 'touchmove' && !drive) return;   // 同一次滑動打完 clear 後的尾巴
+        if (!drive) return finish();
+        let dy = 0;
+        if (e.type === 'wheel') dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+        else if (e.type === 'touchstart') { touchY = e.touches[0].clientY; return; }
+        else if (e.type === 'touchmove') { dy = touchY - e.touches[0].clientY; touchY = e.touches[0].clientY; }
+        else if (e.type === 'keydown') dy = { ArrowDown: CHAR_PX, PageDown: CHAR_PX, ' ': CHAR_PX, ArrowUp: -CHAR_PX, PageUp: -CHAR_PX }[e.key] || 0;
+        if (!dy) return;
+        drive.acc = Math.max(0, drive.acc + dy);
+        const n = Math.min(drive.text.length, Math.floor(drive.acc / CHAR_PX));
+        drive.cmd.textContent = drive.text.slice(0, n);
+        if (n === drive.text.length) { const done = drive.resolve; drive = null; done(); }
+      }
+      const skipEvents = ['keydown', 'pointerdown', 'wheel', 'touchstart', 'touchmove'];
+      function finish() {
+        if (done) return;
+        done = true;
+        skipEvents.forEach(t => window.removeEventListener(t, onInput));
+        pClear.remove();
+        if (moved) {
+          aboutNodes.forEach(n => aboutContent.appendChild(n));
+          homeContent.querySelectorAll(':scope > .cleared').forEach(el => el.classList.remove('cleared'));
+          homeWin.style.minHeight = '';
+        }
+        [pFetch, pGreet, pAbout].forEach(p => {
+          const cmd = p.querySelector('.cmd');
+          cmd.textContent = typed.get(p);
+          cmd.classList.remove('typing');
+          const r = p.querySelector('.rprompt');
+          if (!r.classList.contains('on')) { stamp(p); r.classList.add('on'); }
+        });
+        root.classList.remove('intro');   // 之後所有 .step 都會顯示
+        // 看起來沒有變化：同樣的內容，只是從「借用的 home 視窗」變回「下一屏的 about 視窗」，捲過去即可
+        if (moved) root.scrollTo({ top: aboutScreen.offsetTop, behavior: 'instant' });
+      }
+      skipEvents.forEach(t => window.addEventListener(t, onInput, { passive: true }));
+
+      (async () => {
+        try {
+          draw(pFetch); await wait(900);
+          await type(pFetch, typed.get(pFetch));
+          show(document.querySelector('.fetch')); await wait(900);
+
+          // 輸出完，新的 prompt 閃著游標，使用者不滾就一直閃；滾動的量決定 clear 打到哪
+          show(pClear); draw(pClear);
+          await waitForScrollTyping(pClear, typed.get(pClear));
+          await wait(300);
+          enter(pClear);
+          await wait(300);
+          // clear：視窗大小不變，原本的內容整個清掉，換成下一個畫面（不捲動）
+          homeWin.style.minHeight = aboutWin.style.minHeight = homeWin.offsetHeight + 'px';
+          [...homeContent.children].forEach(el => el.classList.add('cleared'));
+          aboutNodes.forEach(n => homeContent.appendChild(n));
+          moved = true;
+          draw(pGreet); await wait(1000);   // 剛清空的畫面：只有新的 prompt 與游標，停一下才開始打
+          await type(pGreet, typed.get(pGreet));
+          show(pGreet.nextElementSibling); await wait(1100);
+
+          show(pAbout); draw(pAbout); await wait(600);
+          await type(pAbout, typed.get(pAbout));
+          show(document.querySelector('.about-grid')); await wait(400);
+        } catch (err) {
+          if (err !== SKIP) console.error(err);
+        }
+        finish();
+      })();
     }
   </script>
 </body>
