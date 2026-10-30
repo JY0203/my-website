@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Resume | Jon</title>
+  <title>Jon Jiang | Resume</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <meta name="color-scheme" content="dark light">
   <script>
     /* 先套用記住的主題；網址帶 ?embed 時是被首頁的彈出層嵌進來的 */
@@ -287,6 +288,7 @@
     function setLang(lang, save = true) {
       root.dataset.lang = lang;
       root.lang = lang === 'zh' ? 'zh-Hant' : 'en';
+      document.title = lang === 'zh' ? '江仲元 | 履歷' : 'Jon Jiang | Resume';
       downloadBtn.href = `resume-${lang}.pdf`;
       document.querySelectorAll('[data-set-lang]').forEach(btn =>
         btn.classList.toggle('active', btn.dataset.setLang === lang));

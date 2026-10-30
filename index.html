@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jon J. | DevOps / SRE / Platform</title>
+  <title>Jon Jiang | Home</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <meta name="description" content="Jon J. 的個人網站：DevOps / SRE / Platform Engineering，k3s homelab、GitOps 與監控。">
   <meta name="color-scheme" content="dark light">
   <script>
@@ -492,11 +493,18 @@
       if (save) { try { localStorage.setItem('theme', theme); } catch (e) {} }
       postPrefs();
     }
+    /* 分頁標題：「名字 | 目前頁面」，名字與頁面名稱跟著語言；頁面取自導覽列標籤的 data-title-* */
+    function updateTitle() {
+      const zh = root.dataset.lang === 'zh';
+      const tab = document.querySelector('.tabs a[href="' + (root.dataset.page === 'resume' ? 'resume.html' : '#' + (root.dataset.page || 'home')) + '"]');
+      document.title = (zh ? '江仲元' : 'Jon Jiang') + ' | ' + (tab ? (zh ? tab.dataset.titleZh : tab.dataset.titleEn) : '');
+    }
     function setLang(lang, save) {
       root.dataset.lang = lang;
       root.lang = lang === 'zh' ? 'zh-Hant' : 'en';
       document.querySelectorAll('[data-title-zh]').forEach(el =>
         el.title = lang === 'zh' ? el.dataset.titleZh : el.dataset.titleEn);
+      updateTitle();
       if (save) { try { localStorage.setItem('lang', lang); } catch (e) {} }
       postPrefs();
     }
@@ -560,6 +568,8 @@
 
     function markActive() {
       tabs.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + currentSection));
+      root.dataset.page = currentSection;
+      updateTitle();
     }
     function ensureFrame() {
       if (!frame.getAttribute('src')) frame.src = frame.dataset.src;
@@ -573,6 +583,8 @@
       overlay.classList.add('open');
       lockScroll();
       tabs.forEach(a => a.classList.toggle('active', a === resumeTab));
+      root.dataset.page = 'resume';
+      updateTitle();
       document.getElementById('resume-sheet').focus({ preventScroll: true });
     }
     function closeResume() {
