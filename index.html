@@ -82,7 +82,6 @@
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; scroll-snap-type: y proximity; scrollbar-gutter: stable; }
-    html.no-scroll { overflow: hidden; }
     body {
       margin: 0;
       background: var(--bg);
@@ -158,7 +157,6 @@
     .rprompt.on { display: flex; }
     .rprompt .ok { color: var(--green); }
     /* 開場動畫：依序顯示的區塊先藏起來（display:none 讓視窗像真的終端機一樣隨輸出長高），輸入過程的游標，clear 後被清掉的內容 */
-    html.intro { overflow: hidden; }
     html.intro .step:not(.shown) { display: none; }
     .cmd.typing::after {
       content: ""; display: inline-block; width: .55em; height: 1.15em; margin-left: 1px; vertical-align: text-bottom;
@@ -573,7 +571,7 @@
       lastFocus = document.activeElement;
       overlay.inert = false;
       overlay.classList.add('open');
-      root.classList.add('no-scroll');
+      lockScroll();
       tabs.forEach(a => a.classList.toggle('active', a === resumeTab));
       document.getElementById('resume-sheet').focus({ preventScroll: true });
     }
@@ -582,7 +580,7 @@
       resumeOpen = false;
       overlay.classList.remove('open');
       overlay.inert = true;
-      root.classList.remove('no-scroll');
+      unlockScroll();
       markActive();
       if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
     }
@@ -597,6 +595,27 @@
     const WHEEL_RANGE = 360;      // deltaY 累積多少 = 履歷完整落下；越小越靈敏
     const SETTLE_MS = 120;        // 滾輪停多久算「放手」
     const SNAP_OPEN = 0.4, SNAP_CLOSE = 0.6;   // 從收起拉出 > 40% 就落下；從落下推回 > 40%（< 60%）就收起
+    /* 鎖住頁面捲動（履歷開著、開場動畫期間）。
+       刻意不用 html { overflow: hidden }：切換它會在重新排版時增減頁面捲軸，而 Safari（WebKit）在觸控板慣性還在跑時做這件事會當機
+       （「重複發生問題」；當機報告：ScrollAnimationMomentum::updateScrollExtents ← didAddScrollbar ← willDoLayout）。
+       改成攔截滾輪、觸控與捲動鍵，捲軸模式完全不變 */
+    const SCROLL_KEYS = new Set([' ', 'PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown']);
+    const SCROLL_LOCK_EVENTS = ['wheel', 'touchmove', 'keydown'];
+    let scrollLocked = false;
+    function blockScroll(e) {
+      if (e.type === 'keydown' && (!SCROLL_KEYS.has(e.key) || e.target.closest('button, a, input, textarea'))) return;
+      e.preventDefault();
+    }
+    function lockScroll() {
+      if (scrollLocked) return;
+      scrollLocked = true;
+      SCROLL_LOCK_EVENTS.forEach(t => window.addEventListener(t, blockScroll, { passive: false }));
+    }
+    function unlockScroll() {
+      if (!scrollLocked) return;
+      scrollLocked = false;
+      SCROLL_LOCK_EVENTS.forEach(t => window.removeEventListener(t, blockScroll));
+    }
     let dragging = false, dragP = 0, dragTimer = 0, dragLockUntil = 0, bottomAt = 0, wasBottom = false;
     function atPageBottom() {
       return root.scrollTop + window.innerHeight >= root.scrollHeight - 4;
@@ -698,6 +717,7 @@
       const typed = new Map(prompts.map(p => [p, p.querySelector('.cmd').textContent]));   // 先記下原本的指令，再清空等動畫打字
       prompts.forEach(p => { p.querySelector('.cmd').textContent = ''; });
       document.querySelectorAll('.window').forEach(w => w.classList.add('in'));   // 不要淡入，視窗直接在
+      lockScroll();
 
       let done = false;
       const toTop = () => { if (!moved && !done) root.scrollTo({ top: 0, behavior: 'instant' }); };   // 瀏覽器可能依 hash 或舊位置捲過
@@ -770,6 +790,7 @@
           if (!r.classList.contains('on')) { stamp(p); r.classList.add('on'); }
         });
         root.classList.remove('intro');   // 之後所有 .step 都會顯示
+        unlockScroll();
         // 看起來沒有變化：同樣的內容，只是從「借用的 home 視窗」變回「下一屏的 about 視窗」，捲過去即可
         if (moved) root.scrollTo({ top: aboutScreen.offsetTop, behavior: 'instant' });
       }
