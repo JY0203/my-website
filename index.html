@@ -86,6 +86,7 @@
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; scroll-snap-type: y proximity; scrollbar-gutter: stable; }
+    html.no-snap { scroll-snap-type: none; }   /* 點標籤的平滑捲動期間暫時關掉吸附：iOS 會在途中把捲動拉回最近的吸附點 */
     body {
       margin: 0;
       background: var(--bg);
@@ -122,8 +123,12 @@
     }
     .tabs svg, .tools svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
     .tabs .label, .tools .label { max-width: 0; margin-left: 0; opacity: 0; overflow: hidden; transition: max-width .3s ease, margin-left .3s ease, opacity .2s ease; }
-    .tabs a:hover, .tabs a:focus-visible, .tools button:hover, .tools button:focus-visible { color: var(--fg); background: rgba(var(--tint), 0.08); text-decoration: none; outline: none; }
-    .tabs a:hover .label, .tabs a:focus-visible .label, .tools button:hover .label, .tools button:focus-visible .label { max-width: 9ch; margin-left: 8px; opacity: 1; }
+    .tabs a:focus-visible, .tools button:focus-visible { color: var(--fg); background: rgba(var(--tint), 0.08); text-decoration: none; outline: none; }
+    .tabs a:focus-visible .label, .tools button:focus-visible .label { max-width: 9ch; margin-left: 8px; opacity: 1; }
+    @media (hover: hover) {   /* 觸控裝置點過會黏住 hover，標籤會一直展開，所以只給有滑鼠的裝置 */
+      .tabs a:hover, .tools button:hover { color: var(--fg); background: rgba(var(--tint), 0.08); text-decoration: none; outline: none; }
+      .tabs a:hover .label, .tools button:hover .label { max-width: 9ch; margin-left: 8px; opacity: 1; }
+    }
     .tabs a.active { color: var(--fg); background: rgba(var(--tint), 0.16); }
     @media (hover: none) { .tabs a.active .label { max-width: 9ch; margin-left: 8px; opacity: 1; } }
 
@@ -612,7 +617,13 @@
       if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
     }
     resumeTab.addEventListener('click', (e) => { e.preventDefault(); resumeOpen ? closeResume() : openResume(); });
-    tabs.forEach(a => { if (a !== resumeTab) a.addEventListener('click', closeResume); });
+    let snapTimer = 0;
+    tabs.forEach(a => { if (a !== resumeTab) a.addEventListener('click', () => {
+      closeResume();
+      root.classList.add('no-snap');
+      clearTimeout(snapTimer);
+      snapTimer = setTimeout(() => root.classList.remove('no-snap'), 900);
+    }); });
     document.getElementById('resume-scrim').addEventListener('click', closeResume);
     document.getElementById('resume-close').addEventListener('click', closeResume);
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeResume(); });
@@ -714,7 +725,9 @@
       touchAt = now;
       clearTimeout(touchTimer);
       touchTimer = setTimeout(touchFinish, 2000);   // 保險：touchend 沒送達（例如 iframe 收不到）時不要卡在拖曳中
-      dragBy(resumeOpen ? -dyUp : dyUp);
+      // 1:1 跟手：手指移動多少，履歷就走多少（行程約一個視窗高）。滾輪的 WHEEL_RANGE 不適用於觸控
+      const dy = dyUp * WHEEL_RANGE / window.innerHeight;
+      dragBy(resumeOpen ? -dy : dy);
       if (!dragging) touchDrag = false;   // 還在冷卻中被拒絕：不要卡在觸控模式
       return touchDrag;
     }

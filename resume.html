@@ -340,11 +340,11 @@
       window.addEventListener('touchstart', (e) => {
         tArmed = e.touches.length === 1 && atBottom();
         tActive = false;
-        if (tArmed) { tY = e.touches[0].clientY; tTotal = 0; }
+        if (tArmed) { tY = e.touches[0].screenY; tTotal = 0; }
       }, { passive: true });
       window.addEventListener('touchmove', (e) => {
         if (!tArmed) return;
-        const y = e.touches[0].clientY, d = tY - y;
+        const y = e.touches[0].screenY, d = tY - y;   // 用螢幕座標：履歷自己會跟著手指移動，clientY 會被這個位移抵銷，造成來回抖動
         tY = y; tTotal += d;
         if (!tActive) {
           if (tTotal < 8 || !atBottom()) return;
