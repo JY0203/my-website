@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark" data-lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Jon Jiang | Home</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <meta name="description" content="Jon J. 的個人網站：DevOps / SRE / Platform Engineering，k3s homelab、GitOps 與監控。">
@@ -54,6 +54,9 @@
       --sheet: linear-gradient(145deg, rgba(230, 223, 200, 0.12), rgba(230, 223, 200, 0.05)), rgba(13, 13, 13, 0.62);
       --nav-gap: 28px; /* 導覽列到視窗頂端、到終端機視窗的距離（兩者相等） */
       --nav-h: 50px;
+      --top-inset: calc(var(--nav-gap) * 2 + var(--nav-h));   /* 每屏與履歷彈出層上緣的留白（桌機：讓出頂部導覽列） */
+      --screen-bottom: 56px;   /* 每屏下緣留白 */
+      --sheet-bottom: 28px;    /* 履歷彈出層下緣留白 */
       --mono: "JetBrains Mono", "JetBrainsMono Nerd Font", ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     /* 淺色：奶油紙面，文字用深墨色，強調色加深以維持對比 */
@@ -133,7 +136,7 @@
     section.screen {
       min-height: 100vh; min-height: 100svh;
       display: flex; align-items: flex-start; justify-content: center;
-      padding: calc(var(--nav-gap) * 2 + var(--nav-h)) 20px 56px; scroll-snap-align: start;
+      padding: var(--top-inset) 20px var(--screen-bottom); scroll-snap-align: start;
     }
     .window {
       width: min(860px, 100%);
@@ -234,14 +237,14 @@
     }
     .resume-overlay.open .resume-scrim { opacity: 1; }
     .resume-sheet {
-      position: absolute; left: 50%; bottom: 28px;
-      top: calc(var(--nav-gap) * 2 + var(--nav-h));
+      position: absolute; left: 50%; bottom: var(--sheet-bottom);
+      top: var(--top-inset);
       width: min(860px, calc(100% - 40px));
       background: var(--sheet); border: 1px solid var(--panel-line); border-radius: 18px;
       box-shadow: inset 0 1px 0 var(--hi), var(--shadow);
       -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%);
       overflow: hidden;
-      opacity: 0; transform: translate(-50%, calc(-100% - var(--nav-gap) * 2 - var(--nav-h) - 24px));
+      opacity: 0; transform: translate(-50%, calc(-100% - var(--top-inset) - 24px));
       transition: transform .4s cubic-bezier(.5, 0, .75, 0), opacity 0s linear .4s;   /* 收起：加速上去，移出畫面後才隱藏（不能邊移邊淡出，否則看起來像消失） */
     }
     .resume-overlay.open .resume-sheet {
@@ -254,9 +257,10 @@
     .resume-overlay.dragging .resume-scrim { opacity: var(--p); transition: none; }
     .resume-overlay.dragging .resume-sheet {
       opacity: 1; transition: none;
-      transform: translate(-50%, calc((1 - var(--p)) * (-100% - var(--nav-gap) * 2 - var(--nav-h) - 24px)));
+      transform: translate(-50%, calc((1 - var(--p)) * (-100% - var(--top-inset) - 24px)));
     }
     .resume-overlay.dragging iframe { pointer-events: none; }
+    .resume-overlay.dragging.touch iframe { pointer-events: auto; }   /* 觸控中途改變手指所在元素的 pointer-events，iOS 會送 touchcancel，造成來回閃 */
     .resume-sheet iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: transparent; }
     /* 關閉鈕：macOS 視窗左上角的紅色圓點，hover 才顯示 ×（外圈加大是為了好點） */
     .resume-close {
@@ -289,6 +293,17 @@
     .js .reveal.in { opacity: 1; transform: none; }
 
     @media (max-width: 640px) {
+      /* 手機：導覽列移到底部（單手好按）；內容讓開動態島／狀態列，底部讓出導覽列。
+         safe-area 需要 viewport-fit=cover 才有值；Safari 自己的底部工具列是否算進去，要實機確認 */
+      :root {
+        --nav-gap: 12px;
+        --top-inset: calc(env(safe-area-inset-top, 0px) + 16px);
+        --sheet-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--nav-gap) * 2 + var(--nav-h));
+        --screen-bottom: calc(var(--sheet-bottom) + 16px);
+      }
+      .bar { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--nav-gap)); }
+      .bar:not(.tools) { left: 12px; transform: none; }
+      .bar.tools { right: 12px; }
       .rprompt .ok { display: none; }
       .fetch { flex-direction: column; align-items: flex-start; }
       .about-grid { flex-direction: column; }
@@ -657,7 +672,7 @@
       clearTimeout(dragTimer);
       dragging = false;
       dragLockUntil = performance.now() + 300;   // 吃掉觸控板的慣性尾巴
-      overlay.classList.remove('dragging');
+      overlay.classList.remove('dragging', 'touch');
       overlay.style.removeProperty('--p');
       let wantOpen = dragP >= (resumeOpen ? SNAP_CLOSE : SNAP_OPEN);
       if (Math.abs(vel) > FLICK) wantOpen = resumeOpen ? vel < 0 : vel > 0;   // 快速甩動：看方向，不看位置
@@ -694,7 +709,7 @@
        dyUp = 手指這次往上移動的量。收起時履歷往上走（p 變小），拉出時往下走（p 變大） */
     function touchStep(dyUp) {
       const now = performance.now();
-      if (!touchDrag) { touchDrag = true; touchVel = 0; }
+      if (!touchDrag) { touchDrag = true; touchVel = 0; overlay.classList.add('touch'); }
       else touchVel = 0.7 * touchVel + 0.3 * (dyUp / Math.max(1, now - touchAt));
       touchAt = now;
       clearTimeout(touchTimer);
