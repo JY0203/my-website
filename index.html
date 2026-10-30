@@ -215,6 +215,11 @@
     .about-grid { display: flex; align-items: flex-start; gap: clamp(20px, 4vw, 40px); }
     .about-grid .md { flex: 1; min-width: 0; }
     .about-grid .md h2:first-child { margin-top: 0; }
+    /* 讓 ASCII 大頭照第一行與「## Who I am / 我是誰」同一條水平線（中英文共用）。
+       標題中心 = .out 的 margin-top 6px + h2 行高(14px × 1.7)的一半 ≈ 18px；大頭照第一行中心 = 0.5em。直排（手機）時不需要 */
+    @media (min-width: 641px) {
+      .about-grid .portrait { margin-top: calc(18px - 0.5em); }
+    }
     .portrait { margin: 0; flex: none; font-family: var(--mono); font-size: clamp(6px, 1.15vw, 9.5px); line-height: 1; letter-spacing: 0; white-space: pre; color: var(--fg); opacity: .9; user-select: none; }
     /* 履歷彈出層：停在目前頁面上，背景模糊，履歷從上方落下 */
     .resume-overlay {

@@ -110,7 +110,13 @@
 
     /* 嵌在首頁彈出層裡：背景透明（由彈出層提供），只留下載按鈕 */
     .embed body { background: transparent; }
-    .embed .topbar { position: static; background: transparent; border-bottom: 0; justify-content: flex-end; padding: 12px 24px 0; }
+    /* 頂端列固定（sticky）：履歷往下捲時，下載鈕仍留在上方。列本身透明且不吃點擊，只有按鈕可點；按鈕自帶半透明玻璃底，才不會被捲過去的文字干擾 */
+    .embed .topbar { background: transparent; border-bottom: 0; justify-content: flex-end; padding: 12px 24px 0; pointer-events: none; }
+    .embed .download {
+      pointer-events: auto; background: color-mix(in srgb, var(--bar-bg) 70%, transparent);
+      -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%);
+    }
+    .embed .download:hover { background: var(--btn-on); }
     .embed .topbar > a[href="index.html"], .embed .lang-switch { display: none; }
     .embed .page { margin-top: 0; padding-top: 8mm; }
 
