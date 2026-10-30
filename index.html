@@ -597,7 +597,7 @@
     const WHEEL_RANGE = 360;      // deltaY 累積多少 = 履歷完整落下；越小越靈敏
     const SETTLE_MS = 120;        // 滾輪停多久算「放手」
     const SNAP_OPEN = 0.4, SNAP_CLOSE = 0.6;   // 從收起拉出 > 40% 就落下；從落下推回 > 40%（< 60%）就收起
-    let dragging = false, dragP = 0, dragTimer = 0, dragLockUntil = 0, lastScrollAt = 0;
+    let dragging = false, dragP = 0, dragTimer = 0, dragLockUntil = 0, bottomAt = 0, wasBottom = false;
     function atPageBottom() {
       return root.scrollTop + window.innerHeight >= root.scrollHeight - 4;
     }
@@ -628,7 +628,13 @@
       const wantOpen = dragP >= (resumeOpen ? SNAP_CLOSE : SNAP_OPEN);
       if (wantOpen) openResume(); else closeResume();   // 狀態沒變時是 no-op，CSS transition 會把它帶回原位
     }
-    window.addEventListener('scroll', () => { lastScrollAt = performance.now(); }, { passive: true });
+    /* 記下「剛捲到底」的時間，用來忽略捲到底那一下的慣性。
+       不能用「最後一次 scroll 事件」判斷：Safari 在底部彈跳（rubber-band）時會一直送 scroll 事件，條件就永遠不成立 */
+    window.addEventListener('scroll', () => {
+      const atBottom = atPageBottom();
+      if (atBottom && !wasBottom) bottomAt = performance.now();
+      wasBottom = atBottom;
+    }, { passive: true });
     /* 履歷開著時，父頁收到的滾輪（在 iframe 外，或連續滾動時瀏覽器把手勢鎖在父頁）轉給 iframe 捲動。
        回傳 true = 已當成履歷內容的捲動處理掉；在頂端往上滾則交給呼叫端去收起彈出層 */
     let forwardedAt = 0;
@@ -645,8 +651,8 @@
       if (dragging) return dragBy(e.deltaY);
       if (resumeOpen) {
         if (!forwardWheel(e.deltaY) && e.deltaY < 0) dragBy(e.deltaY);
-      } else if (!root.classList.contains('intro') && e.deltaY > 0 && atPageBottom() && performance.now() - lastScrollAt > 150) {
-        dragBy(e.deltaY);   // 剛捲到底的慣性不算，等頁面停下來；開場動畫中的滾輪另有用途
+      } else if (!root.classList.contains('intro') && e.deltaY > 0 && atPageBottom() && performance.now() - bottomAt > 150) {
+        dragBy(e.deltaY);   // 剛捲到底的慣性不算；開場動畫中的滾輪另有用途
       }
     }, { passive: true });
     window.addEventListener('message', (e) => {
