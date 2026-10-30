@@ -301,19 +301,27 @@
       /* 手機：導覽列移到底部（單手好按）；內容讓開動態島／狀態列，底部讓出導覽列。
          safe-area 需要 viewport-fit=cover 才有值；Safari 自己的底部工具列是否算進去，要實機確認 */
       :root {
-        --nav-gap: 12px;
+        --nav-gap: 12px;      /* 視窗下緣到導覽列上緣 */
+        --nav-bottom: 6px;    /* 導覽列到螢幕底部（Safari 工具列上緣） */
         --top-inset: calc(env(safe-area-inset-top, 0px) + 16px);
-        --sheet-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--nav-gap) * 2 + var(--nav-h));
-        --screen-bottom: calc(var(--sheet-bottom) + 16px);
+        --sheet-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--nav-bottom) + var(--nav-h) + var(--nav-gap));
+        --screen-bottom: var(--sheet-bottom);
       }
-      .bar { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--nav-gap)); }
+      .bar { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--nav-bottom)); }
+      /* 視窗至少撐到導覽列上方（內容少的那一屏底端剛好收在膠囊上面）；首頁內容要在一屏放得下，所以下面把間距壓緊 */
+      .window { min-height: calc(100vh - var(--top-inset) - var(--screen-bottom)); min-height: calc(100svh - var(--top-inset) - var(--screen-bottom)); }
+      .content { padding: 18px 18px 18px; }
+      .fetch { margin: 6px 0 14px; gap: 14px; }
+      .logo { font-size: 9px; }
+      .info dl { font-size: 13px; row-gap: 1px; }
+      .swatch { margin-top: 8px; }
       .bar:not(.tools) { left: 12px; transform: none; }
       .bar.tools { right: 12px; }
       /* 頁尾：放在最後一個視窗與底部導覽列之間，上下置中（導覽列是固定的，不往上挪的話會被蓋住） */
       footer {
         margin-top: calc(-1 * var(--screen-bottom));   /* 拉進最後一屏的底部留白，從視窗下緣開始算 */
         padding: 0; line-height: 44px;                 /* 44px = 視窗下緣到導覽列上緣的距離，文字在這段裡置中 */
-        height: calc(44px + env(safe-area-inset-bottom, 0px) + var(--nav-gap) + var(--nav-h));
+        height: calc(44px + env(safe-area-inset-bottom, 0px) + var(--nav-bottom) + var(--nav-h));
       }
       .rprompt .ok { display: none; }
       .fetch { flex-direction: column; align-items: flex-start; }
