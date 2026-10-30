@@ -655,7 +655,7 @@
        改成攔截滾輪、觸控與捲動鍵，捲軸模式完全不變 */
     const SCROLL_KEYS = new Set([' ', 'PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown']);
     const SCROLL_LOCK_EVENTS = ['wheel', 'touchmove', 'keydown'];
-    let scrollLocked = false;
+    let scrollLocked = false, lockedY = 0;
     function blockScroll(e) {
       if (e.type === 'keydown' && (!SCROLL_KEYS.has(e.key) || e.target.closest('button, a, input, textarea'))) return;
       e.preventDefault();
@@ -663,6 +663,7 @@
     function lockScroll() {
       if (scrollLocked) return;
       scrollLocked = true;
+      lockedY = root.scrollTop;
       SCROLL_LOCK_EVENTS.forEach(t => window.addEventListener(t, blockScroll, { passive: false }));
     }
     function unlockScroll() {
@@ -708,6 +709,8 @@
     /* 記下「剛捲到底」的時間，用來忽略捲到底那一下的慣性。
        不能用「最後一次 scroll 事件」判斷：Safari 在底部彈跳（rubber-band）時會一直送 scroll 事件，條件就永遠不成立 */
     window.addEventListener('scroll', () => {
+      // 鎖定中（履歷開著）底下的頁面還是被推動了（例如 iframe 的觸控被傳上來）：推回原位
+      if (scrollLocked && !root.classList.contains('intro') && Math.abs(root.scrollTop - lockedY) > 1) root.scrollTo({ top: lockedY, behavior: 'instant' });
       const atBottom = atPageBottom();
       if (atBottom && !wasBottom) bottomAt = performance.now();
       wasBottom = atBottom;

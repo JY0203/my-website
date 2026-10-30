@@ -111,6 +111,7 @@
 
     /* 嵌在首頁彈出層裡：背景透明（由彈出層提供），只留下載按鈕 */
     .embed body { background: transparent; }
+    .embed { overscroll-behavior: contain; }   /* 頂端／底端繼續滑時，不要把捲動傳給底下的首頁 */
     /* 頂端列固定（sticky）：履歷往下捲時，下載鈕仍留在上方。列本身透明且不吃點擊，只有按鈕可點；按鈕自帶半透明玻璃底，才不會被捲過去的文字干擾 */
     .embed .topbar { background: transparent; border-bottom: 0; justify-content: flex-end; padding: 12px 24px 0; pointer-events: none; }
     .embed .download {
@@ -337,6 +338,16 @@
       const atBottom = () => { const s = document.scrollingElement || root; return s.scrollTop + innerHeight >= s.scrollHeight - 2; };
       const toParent = (msg) => window.parent.postMessage({ type: 'resume-touch', ...msg }, location.origin === 'null' ? '*' : location.origin);
       let tY = 0, tTotal = 0, tArmed = false, tActive = false;
+      // 頂端再往下滑、底端再往上滑：瀏覽器會把捲動傳給底下的首頁，所以直接擋掉（不靠 overscroll-behavior，舊版 iOS 不一定支援）
+      let pY = 0;
+      window.addEventListener('touchstart', (e) => { pY = e.touches[0].screenY; }, { passive: true });
+      window.addEventListener('touchmove', (e) => {
+        const y = e.touches[0].screenY, fingerDown = y > pY;
+        pY = y;
+        const s = document.scrollingElement || root;
+        const atTop = s.scrollTop <= 0, bottom = s.scrollTop + innerHeight >= s.scrollHeight - 2;
+        if (e.cancelable && ((atTop && fingerDown) || (bottom && !fingerDown))) e.preventDefault();
+      }, { passive: false });
       window.addEventListener('touchstart', (e) => {
         tArmed = e.touches.length === 1 && atBottom();
         tActive = false;
