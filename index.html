@@ -307,6 +307,8 @@
         --sheet-bottom: calc(env(safe-area-inset-bottom, 0px) + var(--nav-bottom) + var(--nav-h) + var(--nav-gap));
         --screen-bottom: var(--sheet-bottom);
       }
+      /* 手機不要吸附：每一屏都比螢幕長，iOS 會在途中把捲動拉回該屏起點，往下滑就一直彈回 */
+      html { scroll-snap-type: none; }
       .bar { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--nav-bottom)); }
       /* 視窗至少撐到導覽列上方（內容少的那一屏底端剛好收在膠囊上面）；首頁內容要在一屏放得下，所以下面把間距壓緊 */
       .window { min-height: calc(100vh - var(--top-inset) - var(--screen-bottom)); min-height: calc(100svh - var(--top-inset) - var(--screen-bottom)); }
