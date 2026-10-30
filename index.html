@@ -309,6 +309,12 @@
       .bar { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--nav-gap)); }
       .bar:not(.tools) { left: 12px; transform: none; }
       .bar.tools { right: 12px; }
+      /* 頁尾：放在最後一個視窗與底部導覽列之間，上下置中（導覽列是固定的，不往上挪的話會被蓋住） */
+      footer {
+        margin-top: calc(-1 * var(--screen-bottom));   /* 拉進最後一屏的底部留白，從視窗下緣開始算 */
+        padding: 0; line-height: 44px;                 /* 44px = 視窗下緣到導覽列上緣的距離，文字在這段裡置中 */
+        height: calc(44px + env(safe-area-inset-bottom, 0px) + var(--nav-gap) + var(--nav-h));
+      }
       .rprompt .ok { display: none; }
       .fetch { flex-direction: column; align-items: flex-start; }
       .about-grid { flex-direction: column; }
@@ -786,7 +792,7 @@
       reveals.forEach(el => el.classList.add('in'));
     }
     /* 開場動畫：模擬在終端機裡打指令。fastfetch → clear（畫面捲走）→ cat greet.txt → cat about.md。
-       任何輸入（按鍵、點擊、滾輪、觸控）都會跳過，直接呈現完整頁面。 */
+       自動播放中點擊、按鍵、觸控會跳過，直接呈現完整頁面（滾輪忽略）；fastfetch 後使用者一滾動就接著打 clear。 */
     if (root.classList.contains('intro')) {
       const aboutScreen = document.getElementById('about');
       const homeWin = document.querySelector('#home .window'), aboutWin = aboutScreen.querySelector('.window');
@@ -827,34 +833,34 @@
         enter(p);
       }
 
-      /* 輸入的意義依階段而定：自動播放中 = 跳過；停在 fastfetch 輸出後 = 滾動量驅動打字（往下滾打出 clear，往回滾會刪掉），Esc 隨時跳過 */
-      const CHAR_PX = 40;   // 每滾動多少 px 打出一個字
-      let drive = null;     // { cmd, text, acc, resolve }
+      /* 輸入的意義依階段而定：
+         - 自動播放中：滾輪忽略（不小心碰到不會跳過），點擊與其他按鍵 = 跳過，Esc 隨時跳過
+         - 停在 fastfetch 輸出後：使用者第一次滾動（或按往下的捲動鍵）= 觸發，之後 clear 自己用固定速度打完 */
+      let waiting = null;   // 停在等待狀態時，是一個 resolve 函式
       let touchY = 0;
-      function waitForScrollTyping(p, text) {
-        return new Promise(resolve => { drive = { cmd: p.querySelector('.cmd'), text, acc: 0, resolve }; });
-      }
+      const waitForInput = () => new Promise(resolve => { waiting = resolve; });
+      const trigger = () => { const r = waiting; waiting = null; if (r) r(); };
+      const SCROLL_DOWN_KEYS = new Set(['ArrowDown', 'PageDown', ' ']);
       let lastWheelAt = 0;
       function onInput(e) {
         if (e.key === 'Escape') return finish();
         if (e.type === 'wheel') {
-          // 打完 clear 後觸控板的慣性還會繼續送滾輪事件：同一段連續滾動的尾巴不算新的輸入，安靜 200ms 後再滾才算
+          // 同一段連續滾動（含觸控板慣性）只算一次：安靜 200ms 後再滾才算新的輸入
           const fresh = performance.now() - lastWheelAt > 200;
           lastWheelAt = performance.now();
-          if (!drive && !fresh) return;
+          if (waiting && fresh && e.deltaY) trigger();
+          return;   // 自動播放中的滾輪一律忽略
         }
-        if (e.type === 'touchmove' && !drive) return;   // 同一次滑動打完 clear 後的尾巴
-        if (!drive) return finish();
-        let dy = 0;
-        if (e.type === 'wheel') dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
-        else if (e.type === 'touchstart') { touchY = e.touches[0].clientY; return; }
-        else if (e.type === 'touchmove') { dy = touchY - e.touches[0].clientY; touchY = e.touches[0].clientY; }
-        else if (e.type === 'keydown') dy = { ArrowDown: CHAR_PX, PageDown: CHAR_PX, ' ': CHAR_PX, ArrowUp: -CHAR_PX, PageUp: -CHAR_PX }[e.key] || 0;
-        if (!dy) return;
-        drive.acc = Math.max(0, drive.acc + dy);
-        const n = Math.min(drive.text.length, Math.floor(drive.acc / CHAR_PX));
-        drive.cmd.textContent = drive.text.slice(0, n);
-        if (n === drive.text.length) { const done = drive.resolve; drive = null; done(); }
+        if (e.type === 'touchmove') {
+          if (waiting && Math.abs(touchY - e.touches[0].clientY) > 10) trigger();
+          return;
+        }
+        if (e.type === 'touchstart' && waiting) { touchY = e.touches[0].clientY; return; }
+        if (waiting) {
+          if (e.type === 'keydown' && SCROLL_DOWN_KEYS.has(e.key)) trigger();
+          return;   // 等待中，其他輸入（點擊、其他按鍵）不算
+        }
+        finish();
       }
       const skipEvents = ['keydown', 'pointerdown', 'wheel', 'touchstart', 'touchmove'];
       function finish() {
@@ -887,11 +893,11 @@
           await type(pFetch, typed.get(pFetch));
           show(document.querySelector('.fetch')); await wait(900);
 
-          // 輸出完，新的 prompt 閃著游標，使用者不滾就一直閃；滾動的量決定 clear 打到哪
+          // 輸出完，新的 prompt 閃著游標，使用者不動就一直閃；動了之後 clear 自己打完
           show(pClear); draw(pClear);
-          await waitForScrollTyping(pClear, typed.get(pClear));
-          await wait(300);
-          enter(pClear);
+          await waitForInput();
+          await wait(250);
+          await type(pClear, typed.get(pClear));   // 打完後 type() 內會按下 Enter
           await wait(300);
           // clear：視窗大小不變，原本的內容整個清掉，換成下一個畫面（不捲動）
           homeWin.style.minHeight = aboutWin.style.minHeight = homeWin.offsetHeight + 'px';
