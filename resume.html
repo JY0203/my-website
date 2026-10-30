@@ -331,6 +331,32 @@
         window.scrollBy({ top: dy, left: 0, behavior: 'instant' });
         scrolledAt = now;
       }, { passive: false });
+
+      // 觸控：履歷已經在最底部時，手指再往上推，履歷跟著手指收起（位移回報給首頁）。
+      // 「放下手指的當下」就要在底部才算，從中間一路滑到底的那一次不會直接收起
+      const atBottom = () => { const s = document.scrollingElement || root; return s.scrollTop + innerHeight >= s.scrollHeight - 2; };
+      const toParent = (msg) => window.parent.postMessage({ type: 'resume-touch', ...msg }, location.origin === 'null' ? '*' : location.origin);
+      let tY = 0, tTotal = 0, tArmed = false, tActive = false;
+      window.addEventListener('touchstart', (e) => {
+        tArmed = e.touches.length === 1 && atBottom();
+        tActive = false;
+        if (tArmed) { tY = e.touches[0].clientY; tTotal = 0; }
+      }, { passive: true });
+      window.addEventListener('touchmove', (e) => {
+        if (!tArmed) return;
+        const y = e.touches[0].clientY, d = tY - y;
+        tY = y; tTotal += d;
+        if (!tActive) {
+          if (tTotal < 8 || !atBottom()) return;
+          tActive = true;
+          toParent({ phase: 'move', dy: tTotal });
+        } else toParent({ phase: 'move', dy: d });
+        if (e.cancelable) e.preventDefault();   // 收起中，不要同時讓履歷內容橡皮筋
+      }, { passive: false });
+      ['touchend', 'touchcancel'].forEach(t => window.addEventListener(t, () => {
+        if (tActive) toParent({ phase: 'end' });
+        tArmed = tActive = false;
+      }, { passive: true }));
     }
   </script>
 </body>

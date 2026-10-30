@@ -628,6 +628,8 @@
       scrollLocked = false;
       SCROLL_LOCK_EVENTS.forEach(t => window.removeEventListener(t, blockScroll));
     }
+    const FLICK = 0.4;            // 觸控放開時速度超過這個值（px/ms）就依方向定案
+    let touchDrag = false, touchVel = 0, touchAt = 0, touchTimer = 0;
     let dragging = false, dragP = 0, dragTimer = 0, dragLockUntil = 0, bottomAt = 0, wasBottom = false;
     function atPageBottom() {
       return root.scrollTop + window.innerHeight >= root.scrollHeight - 4;
@@ -646,17 +648,19 @@
       }
       setDrag(dragP + dy / WHEEL_RANGE);
       clearTimeout(dragTimer);
+      if (touchDrag) return;   // 觸控：手指放開（touchend）才算放手，不靠計時，也不在盡頭自動定案
       // 拉到盡頭就直接定案，不等放手：否則使用者一路往下滾時永遠停在拖曳模式，履歷收不到滾輪
       if (dragP >= 1 && !resumeOpen || dragP <= 0 && resumeOpen) endDrag();
       else dragTimer = setTimeout(endDrag, SETTLE_MS);
     }
-    function endDrag() {
+    function endDrag(vel = 0) {   // vel：手指放開時往上的速度（px/ms），只有觸控會帶
       clearTimeout(dragTimer);
       dragging = false;
       dragLockUntil = performance.now() + 300;   // 吃掉觸控板的慣性尾巴
       overlay.classList.remove('dragging');
       overlay.style.removeProperty('--p');
-      const wantOpen = dragP >= (resumeOpen ? SNAP_CLOSE : SNAP_OPEN);
+      let wantOpen = dragP >= (resumeOpen ? SNAP_CLOSE : SNAP_OPEN);
+      if (Math.abs(vel) > FLICK) wantOpen = resumeOpen ? vel < 0 : vel > 0;   // 快速甩動：看方向，不看位置
       if (wantOpen) openResume(); else closeResume();   // 狀態沒變時是 no-op，CSS transition 會把它帶回原位
     }
     /* 記下「剛捲到底」的時間，用來忽略捲到底那一下的慣性。
@@ -686,9 +690,50 @@
         dragBy(e.deltaY);   // 剛捲到底的慣性不算；開場動畫中的滾輪另有用途
       }
     }, { passive: true });
+    /* 觸控：履歷位置直接跟著手指走（沒有滾輪的慣性，所以不用計時放手）。
+       dyUp = 手指這次往上移動的量。收起時履歷往上走（p 變小），拉出時往下走（p 變大） */
+    function touchStep(dyUp) {
+      const now = performance.now();
+      if (!touchDrag) { touchDrag = true; touchVel = 0; }
+      else touchVel = 0.7 * touchVel + 0.3 * (dyUp / Math.max(1, now - touchAt));
+      touchAt = now;
+      clearTimeout(touchTimer);
+      touchTimer = setTimeout(touchFinish, 2000);   // 保險：touchend 沒送達（例如 iframe 收不到）時不要卡在拖曳中
+      dragBy(resumeOpen ? -dyUp : dyUp);
+      if (!dragging) touchDrag = false;   // 還在冷卻中被拒絕：不要卡在觸控模式
+      return touchDrag;
+    }
+    function touchFinish() {
+      clearTimeout(touchTimer);
+      if (!touchDrag) return;
+      touchDrag = false;
+      if (dragging) endDrag(touchVel);
+    }
+    /* 拉出：頁面「放下手指的當下」就在底部，手指再往上推才算；從中間一路滑到底的那一次不算 */
+    let tY = 0, tTotal = 0, tArmed = false;
+    window.addEventListener('touchstart', (e) => {
+      tArmed = !resumeOpen && !dragging && !root.classList.contains('intro') && e.touches.length === 1 && atPageBottom();
+      if (tArmed) { tY = e.touches[0].clientY; tTotal = 0; }
+    }, { passive: true });
+    window.addEventListener('touchmove', (e) => {
+      if (!tArmed) return;
+      const y = e.touches[0].clientY, d = tY - y;
+      tY = y; tTotal += d;
+      if (!touchDrag) {
+        if (tTotal < 8 || !atPageBottom()) return;   // 要明確往上推一小段才開始
+        touchStep(tTotal);
+      } else touchStep(d);
+      if (touchDrag && e.cancelable) e.preventDefault();   // 擋掉 iOS 底部的橡皮筋
+    }, { passive: false });
+    ['touchend', 'touchcancel'].forEach(t => window.addEventListener(t, () => { tArmed = false; touchFinish(); }, { passive: true }));
     window.addEventListener('message', (e) => {
       if (e.source !== frame.contentWindow || !e.data) return;
       if (e.data.type === 'resume-wheel-up' && resumeOpen) dragBy(e.data.dy || 0);
+      // 收起：履歷（iframe 內）在最底部時手指往上推，由它回報位移
+      else if (e.data.type === 'resume-touch' && resumeOpen) {
+        if (e.data.phase === 'move') touchStep(e.data.dy || 0);
+        else touchFinish();
+      }
     });
     frame.addEventListener('load', postPrefs);
     markActive();
