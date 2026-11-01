@@ -27,31 +27,34 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    /* 深色：cream-black，配色取自 dotfiles/ghostty/config */
+    /* 深色：配色取自使用者提供的色票（bg #0f0e17 / headline #fffffe / paragraph #a7a9be / button #ff8906 / secondary #f25f4c / tertiary #e53170）。
+       變數名沿用舊的（orange / green / blue…），值都對到色票的強調色；色票沒有「次要文字」，--dim 是另外取的 */
     :root {
       color-scheme: dark;
-      --bg: #0d0d0d;
-      --backdrop: #000;
-      --fg: #e6dfc8;
-      --dim: #6b675c;
-      --red: #d9776b;
-      --orange: #d9a066;
-      --yellow: #e0c98a;
-      --green: #a3b18a;
-      --cyan: #8bb5ad;
-      --blue: #8fa8b8;
-      --purple: #b89bb5;
-      --tint: 230, 223, 200; /* hover、選取底色用的色調 */
-      --panel: linear-gradient(145deg, rgba(230, 223, 200, 0.10), rgba(230, 223, 200, 0.03));
-      --panel-line: rgba(230, 223, 200, 0.18);
-      --hi: rgba(255, 255, 255, 0.14);
+      --bg: #0f0e17;
+      --backdrop: #0f0e17;
+      --fg: #fffffe;
+      --dim: #a7a9be;
+      --accent: #ff8906;
+      --coral: #f25f4c;
+      --red: #e53170;
+      --orange: var(--accent);
+      --yellow: var(--accent);
+      --green: var(--accent);
+      --cyan: var(--dim);
+      --blue: var(--accent);
+      --purple: var(--red);
+      --tint: 255, 255, 254; /* hover、選取底色用的色調 */
+      --panel: rgba(255, 255, 254, 0.04);   /* 玻璃：單色極低 alpha，不用漸層與內陰影高光 */
+      --panel-line: rgba(255, 255, 254, 0.14);
+      --hi: transparent;
       --titlebar: rgba(0, 0, 0, 0.25);
       --mac-red: #ff5f57; --mac-yellow: #febc2e; --mac-green: #28c840;   /* 紅綠燈：macOS 固定色，不隨主題變 */
-      --shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 60px rgba(230, 223, 200, 0.05), 0 24px 80px rgba(0, 0, 0, 0.7);
-      --bar-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-      --selection: #2a2825;
+      --shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 60px rgba(255, 255, 254, 0.04), 0 24px 80px rgba(0, 0, 0, 0.7);
+      --bar-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      --selection: #2e2c45;
       --scrim: rgba(0, 0, 0, 0.35);
-      --sheet: linear-gradient(145deg, rgba(230, 223, 200, 0.12), rgba(230, 223, 200, 0.05)), rgba(13, 13, 13, 0.62);
+      --sheet: rgba(15, 14, 23, 0.72);
       --nav-gap: 28px; /* 導覽列到視窗頂端、到終端機視窗的距離（兩者相等） */
       --nav-h: 50px;
       --top-inset: calc(var(--nav-gap) * 2 + var(--nav-h));   /* 每屏與履歷彈出層上緣的留白（桌機：讓出頂部導覽列） */
@@ -59,30 +62,26 @@
       --sheet-bottom: 28px;    /* 履歷彈出層下緣留白 */
       --mono: "JetBrains Mono", "JetBrainsMono Nerd Font", ui-monospace, SFMono-Regular, Menlo, monospace;
     }
-    /* 淺色：奶油紙面，文字用深墨色，強調色加深以維持對比 */
+    /* 淺色：色票 bg #f8f5f2 / headline #232323 / button #078080 / secondary #f45d48；--dim 另外取 */
     html[data-theme="light"] {
       color-scheme: light;
-      --bg: #f4efe0;
-      --backdrop: #efe9d6;
-      --fg: #1d1c19;
-      --dim: #7d7868;
-      --red: #b5483c;
-      --orange: #b3661a;
-      --yellow: #9a7a14;
-      --green: #5f7447;
-      --cyan: #3f7a72;
-      --blue: #3f6a82;
-      --purple: #7d5a7a;
-      --tint: 29, 28, 25;
-      --panel: linear-gradient(145deg, rgba(255, 255, 255, 0.70), rgba(255, 255, 255, 0.32));
-      --panel-line: rgba(29, 28, 25, 0.14);
-      --hi: rgba(255, 255, 255, 0.9);
-      --titlebar: rgba(29, 28, 25, 0.05);
-      --shadow: 0 0 0 1px rgba(29, 28, 25, 0.04), 0 24px 60px rgba(70, 58, 20, 0.18);
-      --bar-shadow: 0 8px 24px rgba(70, 58, 20, 0.18);
-      --selection: #d9d1b8;
-      --scrim: rgba(244, 239, 224, 0.35);
-      --sheet: #fff;
+      --bg: #f8f5f2;
+      --backdrop: #f8f5f2;
+      --fg: #232323;
+      --dim: #5f6262;
+      --accent: #078080;
+      --coral: #f45d48;
+      --red: #f45d48;
+      --tint: 35, 35, 35;
+      --panel: rgba(35, 35, 35, 0.03);
+      --panel-line: rgba(35, 35, 35, 0.14);
+      --hi: transparent;
+      --titlebar: rgba(35, 35, 35, 0.05);
+      --shadow: 0 0 0 1px rgba(35, 35, 35, 0.04), 0 24px 60px rgba(35, 35, 35, 0.12);
+      --bar-shadow: 0 8px 32px rgba(35, 35, 35, 0.06);
+      --selection: #cfe5e5;
+      --scrim: rgba(248, 245, 242, 0.35);
+      --sheet: #fffffe;
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; scroll-snap-type: y proximity; scrollbar-gutter: stable; }
@@ -110,7 +109,7 @@
       padding: 5px; border-radius: 999px;
       background: var(--panel); border: 1px solid var(--panel-line);
       box-shadow: inset 0 1px 0 var(--hi), var(--bar-shadow);
-      -webkit-backdrop-filter: blur(24px) saturate(140%); backdrop-filter: blur(24px) saturate(140%);
+      -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
     }
     /* 右上角工具列（語言、深淺色）：同一排，右緣對齊終端機視窗 */
     .bar.tools { left: auto; right: max(20px, calc((100% - 860px) / 2)); transform: none; }
@@ -146,7 +145,7 @@
     .window {
       width: min(860px, 100%);
       background: var(--panel); border: 1px solid var(--panel-line); border-radius: 18px;
-      -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%);
+      -webkit-backdrop-filter: blur(28px); backdrop-filter: blur(28px);
       box-shadow: inset 0 1px 0 var(--hi), var(--shadow);
       overflow: hidden;
     }
@@ -191,7 +190,7 @@
     .fetch { display: flex; align-items: center; gap: clamp(24px, 5vw, 56px); margin: 8px 0 26px; }
     .logo {
       margin: 0; flex: none; font-family: var(--mono); font-size: clamp(14px, 2.2vw, 18px); line-height: 1;
-      background: linear-gradient(180deg, var(--yellow), var(--orange) 70%, var(--red));
+      background: linear-gradient(180deg, var(--accent), var(--coral) 70%, var(--red));
       -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent;
       user-select: none;
     }
@@ -237,7 +236,7 @@
     .resume-overlay.open { visibility: visible; pointer-events: auto; transition-delay: 0s; }
     .resume-scrim {
       position: absolute; inset: 0; background: var(--scrim);
-      -webkit-backdrop-filter: blur(16px) saturate(120%); backdrop-filter: blur(16px) saturate(120%);
+      -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
       opacity: 0; transition: opacity .4s ease;
     }
     .resume-overlay.open .resume-scrim { opacity: 1; }
@@ -247,7 +246,7 @@
       width: min(860px, calc(100% - 40px));
       background: var(--sheet); border: 1px solid var(--panel-line); border-radius: 18px;
       box-shadow: inset 0 1px 0 var(--hi), var(--shadow);
-      -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%);
+      -webkit-backdrop-filter: blur(28px); backdrop-filter: blur(28px);
       overflow: hidden;
       opacity: 0; transform: translate(-50%, calc(-100% - var(--top-inset) - 24px));
       transition: transform .4s cubic-bezier(.5, 0, .75, 0), opacity 0s linear .4s;   /* 收起：加速上去，移出畫面後才隱藏（不能邊移邊淡出，否則看起來像消失） */
@@ -285,7 +284,7 @@
       display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px;
       background: var(--panel); border: 1px solid var(--panel-line); color: var(--fg); font-size: 13px;
       box-shadow: inset 0 1px 0 var(--hi), var(--bar-shadow);
-      -webkit-backdrop-filter: blur(24px) saturate(140%); backdrop-filter: blur(24px) saturate(140%);
+      -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
       opacity: 0; transform: translate(-50%, 12px); pointer-events: none;
       transition: opacity .25s ease, transform .25s ease;
     }
@@ -336,8 +335,8 @@
       .resume-sheet, .resume-overlay.open .resume-sheet { transform: translate(-50%, 0); transition: opacity .2s ease; }
     }
     @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-      :root { --panel: rgba(34, 33, 30, 0.94); }
-      html[data-theme="light"] { --panel: rgba(250, 247, 238, 0.94); }
+      :root { --panel: rgba(15, 14, 23, 0.94); }
+      html[data-theme="light"] { --panel: rgba(248, 245, 242, 0.94); }
     }
   </style>
 </head>
@@ -358,6 +357,10 @@
       <a href="resume.html" data-title-zh="履歷" data-title-en="Resume" title="履歷">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
         <span class="label"><span class="t-zh">履歷</span><span class="t-en">Resume</span></span>
+      </a>
+      <a href="https://blog.zyjon.dev" title="部落格 / Blog">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></svg>
+        <span class="label"><span class="t-zh">部落格</span><span class="t-en">Blog</span></span>
       </a>
     </div>
   </nav>
@@ -422,7 +425,7 @@
                 <dt>LinkedIn</dt><dd class="ct"><svg class="ico fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg><a href="https://www.linkedin.com/in/jy0203/" target="_blank" rel="noopener noreferrer">linkedin.com/in/jy0203</a></dd>
               </dl>
               <div class="swatch" aria-hidden="true">
-                <i style="background:var(--red)"></i><i style="background:var(--orange)"></i><i style="background:var(--yellow)"></i><i style="background:var(--green)"></i><i style="background:var(--cyan)"></i><i style="background:var(--blue)"></i><i style="background:var(--purple)"></i><i style="background:var(--fg)"></i>
+                <i style="background:var(--red)"></i><i style="background:var(--coral)"></i><i style="background:var(--accent)"></i><i style="background:var(--dim)"></i><i style="background:var(--fg)"></i>
               </div>
             </div>
           </div>
@@ -634,7 +637,7 @@
     }
     resumeTab.addEventListener('click', (e) => { e.preventDefault(); resumeOpen ? closeResume() : openResume(); });
     let snapTimer = 0;
-    tabs.forEach(a => { if (a !== resumeTab) a.addEventListener('click', () => {
+    tabs.forEach(a => { if (a !== resumeTab && a.getAttribute('href').startsWith('#')) a.addEventListener('click', () => {
       closeResume();
       root.classList.add('no-snap');
       clearTimeout(snapTimer);
