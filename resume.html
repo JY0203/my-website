@@ -170,8 +170,8 @@
         <header>
           <h1><span data-lang-text="zh">江仲元</span><span data-lang-text="en">Jon Jiang</span></h1>
           <div class="title">DevOps / SRE / Platform Engineer</div>
-          <p data-lang-text="zh">約兩年 Java 後端經驗，主要維護與重構銀行報表批次系統，並參與 COBOL 轉 Java 的 LLM 輔助轉換 PoC。工作中接觸 K8s 與部署排查後，轉向 DevOps / SRE / Platform Engineering：自學 Kubernetes、考取 CKA、CKAD、RHCSA 與 AWS CLF-C02，並以 k3s homelab 實作 GitOps 與監控。目前尋找 junior 層級的職缺。</p>
-          <p data-lang-text="en">Java backend engineer with about two years of experience maintaining and refactoring a banking report batch system, and contributing to an LLM-assisted COBOL-to-Java conversion PoC. Exposure to Kubernetes and deployment troubleshooting at work led me toward DevOps / SRE / Platform Engineering: I studied Kubernetes on my own, earned CKA, CKAD, RHCSA and AWS CLF-C02, and practice GitOps and observability on a k3s homelab. Looking for junior-level roles.</p>
+          <p data-lang-text="zh">約兩年 Java 後端經驗，參與大型銀行客戶的 COBOL 轉 Java 系統轉換，負責 Dev / SIT 換版與上版失敗的第一線排查（地端 Kubernetes）。因工作中接觸 K8s 與部署排查，轉向 DevOps / SRE / Platform Engineering：取得 CKA、CKAD、RHCSA 與 AWS CLF-C02，並以 k3s homelab 實作 GitOps、CI 與監控。目前尋找 junior 層級職缺。</p>
+          <p data-lang-text="en">Java backend engineer with about two years of experience on a large bank's COBOL-to-Java system conversion: handled Dev/SIT deployments and first-line troubleshooting on an on-prem Kubernetes platform. Exposure to Kubernetes and deployment troubleshooting led me toward DevOps / SRE / Platform Engineering: I hold CKA, CKAD, RHCSA and AWS CLF-C02, and practice GitOps, CI and observability on a k3s homelab. Looking for junior-level roles.</p>
         </header>
         <aside>
           <h2><span data-lang-text="zh">聯絡資訊</span><span data-lang-text="en">Contact</span></h2>
@@ -202,41 +202,38 @@
           <h3><span data-lang-text="zh">後端工程師 | 萬事宜股份有限公司</span><span data-lang-text="en">Backend Engineer | 萬事宜股份有限公司</span></h3>
           <div class="meta">2024/5 – 2026/6 · Taipei</div>
           <ul data-lang-text="zh">
-            <li>協助合作廠商排查 K8s 上版問題</li>
-            <li>負責銀行報表批次系統的業務邏輯維護與重構</li>
-            <li>參與 COBOL 轉 Java 導入 LLM 輔助轉換的 PoC</li>
+            <li>負責 Dev / SIT 換版（地端 Kubernetes）：觸發既有 CI/CD pipeline、依廠商 DevOps 調整修改 K8s yaml；換版失敗時擔任第一線排查，以 ELK 與 kubectl logs / describe 判讀 CrashLoopBackOff 與設定錯誤。</li>
+            <li>優化批次程式：將資料篩選由 Java 雙層迴圈改為 SQL JOIN / WHERE，本地測試時間由 1 小時多降至約 10 分鐘，已上線並通過客戶驗收。</li>
+            <li>上線前每日報表驗收：以 Python 依欄位定義擷取差異，將常見差異原因整理成規則，產出客戶驗收報告。</li>
           </ul>
           <ul data-lang-text="en">
-            <li>Helped partner vendors troubleshoot K8s deployment issues</li>
-            <li>Maintained and refactored business logic in a banking report batch system</li>
-            <li>Took part in a PoC applying LLMs to COBOL-to-Java conversion</li>
+            <li>Handled Dev/SIT deployments on an on-prem Kubernetes platform: triggered the existing CI/CD pipeline, edited Kubernetes YAML following the partner DevOps team's adjustments, and served as first responder on failed deployments, diagnosing CrashLoopBackOff and configuration errors with ELK and kubectl logs/describe.</li>
+            <li>Optimized a batch job by replacing Java nested-loop filtering with SQL JOIN/WHERE; local test run time dropped from over an hour to about 10 minutes; shipped to production and accepted by the client.</li>
+            <li>Ran daily report acceptance checks before go-live: used Python to extract fields by spec to locate differences, codified common causes into rules, and produced client acceptance reports.</li>
           </ul>
+
+          <h3><span data-lang-text="zh">Homelab 建置與求職</span><span data-lang-text="en">Homelab build-out and job search</span></h3>
+          <div class="meta"><span data-lang-text="zh">2026/6 – 現在</span><span data-lang-text="en">2026/6 – Present</span></div>
 
           <h2><span data-lang-text="zh">Homelab 專案</span><span data-lang-text="en">Homelab Projects</span></h2>
-          <h3>crypto_trader_infra</h3>
-          <div class="meta">k3s · ArgoCD · GitLab CI · Helm · Prometheus / Grafana · Loki</div>
-          <ul data-lang-text="zh">
-            <li>GitLab CI 流水線（lint → test → build → update-manifest）：以 rootless BuildKit 建置映像，並自動更新 infra repo 的 image tag</li>
-            <li>ArgoCD 偵測 infra repo 變更後自動同步（prune / selfHeal）到 k3s；應用程式與 PostgreSQL 以 Helm chart 管理</li>
-            <li>kube-prometheus-stack 做監控、Loki + Promtail 做日誌（解析 JSON log），GitLab Runner 以 Kubernetes executor 跑在叢集內</li>
-          </ul>
-          <ul data-lang-text="en">
-            <li>GitLab CI pipeline (lint → test → build → update-manifest): builds images with rootless BuildKit and automatically bumps the image tag in the infra repo</li>
-            <li>ArgoCD detects infra repo changes and syncs them to k3s automatically (prune / selfHeal); the app and PostgreSQL are managed as Helm charts</li>
-            <li>Monitoring with kube-prometheus-stack, logging with Loki + Promtail (JSON log parsing); GitLab Runner runs in the cluster with the Kubernetes executor</li>
-          </ul>
-
           <h3>gitops-homelab</h3>
-          <div class="meta">k3s · ArgoCD · Kustomize · kube-prometheus-stack</div>
+          <div class="meta">k3s · ArgoCD · kube-prometheus-stack</div>
           <ul data-lang-text="zh">
             <li>以 ArgoCD App-of-Apps（root Application）統一管理叢集內的應用與設定，並啟用自動同步（prune / selfHeal）</li>
             <li>部署 kube-prometheus-stack，並設定 local-path StorageClass 讓 Prometheus 與 Grafana 資料持久化</li>
-            <li>部署 Online Boutique 微服務範例（Kustomize + Ingress）作為練習環境</li>
           </ul>
           <ul data-lang-text="en">
             <li>Manages cluster apps and config through ArgoCD's App-of-Apps pattern (root Application) with automated sync (prune / selfHeal)</li>
             <li>Runs kube-prometheus-stack with a local-path StorageClass so Prometheus and Grafana data persist</li>
-            <li>Deploys the Online Boutique microservices demo (Kustomize + Ingress) as a practice environment</li>
+          </ul>
+
+          <h3>crypto_trader_infra <span data-lang-text="zh">（舊環境，已停用）</span><span data-lang-text="en">(earlier environment, decommissioned)</span></h3>
+          <div class="meta">k3s · ArgoCD · GitLab CI</div>
+          <ul data-lang-text="zh">
+            <li>GitLab CI 流水線（lint → test → build → update-manifest）：以 rootless BuildKit 建置映像並更新 infra repo 的 image tag，由 ArgoCD 偵測變更後自動同步部署至 k3s</li>
+          </ul>
+          <ul data-lang-text="en">
+            <li>GitLab CI pipeline (lint → test → build → update-manifest): builds images with rootless BuildKit and bumps the image tag in the infra repo; ArgoCD detects the change and syncs it to k3s automatically</li>
           </ul>
 
         </section>
@@ -256,10 +253,10 @@
 
           <h2><span data-lang-text="zh">證照</span><span data-lang-text="en">Certifications</span></h2>
           <ul class="chips">
-            <li><svg class="ic" style="--c:#326CE5" aria-hidden="true"><use href="#i-kubernetes"/></svg>CKA</li>
-            <li><svg class="ic" style="--c:#326CE5" aria-hidden="true"><use href="#i-kubernetes"/></svg>CKAD</li>
-            <li><svg class="ic" style="--c:#EE0000" aria-hidden="true"><use href="#i-redhat"/></svg>RHCSA</li>
-            <li><svg class="ic" style="--c:#FF9900" aria-hidden="true"><use href="#i-aws"/></svg>AWS CLF-C02</li>
+            <li><svg class="ic" style="--c:#326CE5" aria-hidden="true"><use href="#i-kubernetes"/></svg>CKA · 2026</li>
+            <li><svg class="ic" style="--c:#326CE5" aria-hidden="true"><use href="#i-kubernetes"/></svg>CKAD · 2026</li>
+            <li><svg class="ic" style="--c:#EE0000" aria-hidden="true"><use href="#i-redhat"/></svg>RHCSA · 2025</li>
+            <li><svg class="ic" style="--c:#FF9900" aria-hidden="true"><use href="#i-aws"/></svg>AWS CLF-C02 · 2025</li>
           </ul>
 
           <div class="edu">
